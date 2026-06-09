@@ -1,5 +1,5 @@
 
-console.log("hellow222")
+console.log("hello3")
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 
 import {
@@ -51,8 +51,11 @@ const loginOverlay = document.getElementById("loginOverlay");
 let currentUid = null;
 
 async function login() {
-  const email = prompt("Email:");
-  const password = prompt("Password:");
+  const email =
+    document.getElementById("emailInput").value;
+
+  const password =
+    document.getElementById("passwordInput").value;
 
   if (!email || !password) return;
 
@@ -66,8 +69,9 @@ async function login() {
     console.log("LOGIN SUCCESS");
   } catch (error) {
     console.log(error);
+    alert(error.message);
   }
-}
+} 
 
 async function logout() {
   await signOut(auth);
@@ -131,11 +135,15 @@ if (loginOverlay) {
 }
     console.log("NOT LOGGED IN");
 
-    authArea.innerHTML = `
-      <button onclick="login()" class="primary">
-        Login
-      </button>
-    `;
+   authArea.innerHTML = `
+  <input id="emailInput" type="email" placeholder="Email">
+  
+  <input id="passwordInput" type="password" placeholder="Password">
+
+  <button onclick="login()" class="primary">
+    Login
+  </button>
+`;
   }
 });
 
