@@ -94,7 +94,11 @@ if (loginOverlay) {
       </button>
     `;
 
-    await loadCloudData();
+   try {
+  await loadCloudData();
+} catch (e) {
+  console.log("Cloud load failed:", e);
+}
   } else {
     currentUid = null;
  if (loginOverlay) {
@@ -732,7 +736,7 @@ async function loadCloudData() {
 
   loadExercises();
 
-  loadInfoSummary();
+ 
 
   console.log("Cloud loaded");
 }
