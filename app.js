@@ -396,7 +396,7 @@ document.getElementById("loginOverlay") = "none";
           goalWeight: +goalWeight.value,
           goalSpeed: +goalSpeed.value,
           activity: +activity.value,
-          saveCloudData();
+          saveCloudData()
         };
 
         localStorage.setItem("userInfo", JSON.stringify(info));
