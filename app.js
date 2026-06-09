@@ -10,9 +10,11 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 import {
   getAuth,
-  signInAnonymously,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged,
+  signOut,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-
 console.log("APP STARTED");
 console.log(initializeApp);
 
@@ -35,17 +37,35 @@ const auth = getAuth(app);
 
 let currentUid = null;
 
-signInAnonymously(auth)
-  .then(async (userCredential) => {
-    currentUid = userCredential.user.uid;
+const provider = new GoogleAuthProvider();
 
-    console.log("USER:", currentUid);
+let currentUid = null;
+
+async function login() {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function logout() {
+  await signOut(auth);
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUid = user.uid;
+
+    console.log("LOGGED IN:", user.email);
 
     await loadCloudData();
-  })
-  .catch((error) => {
-    console.log("AUTH ERROR:", error);
-  });
+  } else {
+    currentUid = null;
+
+    console.log("NOT LOGGED IN");
+  }
+});
 
 /* DARK MODE */
 
