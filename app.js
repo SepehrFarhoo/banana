@@ -52,7 +52,7 @@ async function login() {
   }
 }
 
-aasync function logout() {
+async function logout() {
   await signOut(auth);
 
   localStorage.clear();
