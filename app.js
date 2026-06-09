@@ -36,10 +36,12 @@ const db = getFirestore(app);
 
 const auth = getAuth(app);
 auth.useDeviceLanguage();
-let currentUid = null;
-
 const provider = new GoogleAuthProvider();
 
+const authArea = document.getElementById("authArea");
+const loginOverlay = document.getElementById("loginOverlay");
+
+let currentUid = null;
 
 
 async function login() {
@@ -77,7 +79,7 @@ selectedFood = null;
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUid = user.uid;
-document.getElementById("loginOverlay").style.display = "none";
+loginOverlay.style.display = "none";
     console.log("LOGGED IN:", user.email);
 
     authArea.innerHTML = `
@@ -93,7 +95,7 @@ document.getElementById("loginOverlay").style.display = "none";
     await loadCloudData();
   } else {
     currentUid = null;
- document.getElementById("loginOverlay").style.display = "flex";
+ loginOverlay.style.display = "flex";
     console.log("NOT LOGGED IN");
 
     authArea.innerHTML = `
