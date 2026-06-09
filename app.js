@@ -669,3 +669,5 @@ window.deleteCustomFood = deleteCustomFood;
 window.deleteCustomExercise = deleteCustomExercise;
 window.deleteEntry = deleteEntry;
 window.selectFood = selectFood;
+window.login = login;
+window.logout = logout;
