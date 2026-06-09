@@ -52,9 +52,11 @@ async function login() {
   }
 }
 
-async function logout() {
+aasync function logout() {
   await signOut(auth);
-localStorage.clear();
+
+  localStorage.clear();
+
   daily = {
     date: "",
     entries: [],
@@ -66,14 +68,20 @@ localStorage.clear();
 
   foods = { ...defaultFoods };
   exercises = { ...defaultExercises };
-selectedFood = null;
+
+  selectedFood = null;
+
+  authArea.innerHTML = `
+    <button onclick="login()" class="primary">
+      Login
+    </button>
+  `;
+
   updateUI();
   renderCustomFoods();
   renderCustomExercises();
   renderWeightChart();
   loadExercises();
-
- 
 }
 
 onAuthStateChanged(auth, async (user) => {
