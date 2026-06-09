@@ -655,28 +655,62 @@ function renderWeightChart() {
 }
 
 async function loadCloudData() {
+  if (!currentUid) return;
+
   const ref = doc(db, "users", currentUid);
 
   const snap = await getDoc(ref);
 
-  if (!snap.exists()) return;
+  if (!snap.exists()) {
+    console.log("No cloud data found");
+    return;
+  }
 
   const data = snap.data();
 
-  if (data.daily) daily = data.daily;
+  if (data.daily) {
+    daily = data.daily;
+  }
 
-  if (data.customFoods) customFoods = data.customFoods;
+  if (data.customFoods) {
+    customFoods = data.customFoods;
+  }
 
-  if (data.customExercises)
+  if (data.customExercises) {
     customExercises = data.customExercises;
+  }
 
-  if (data.weightHistory)
+  if (data.weightHistory) {
     weightHistory = data.weightHistory;
-  if (data.userInfo)
+  }
+
+  if (data.userInfo) {
     localStorage.setItem(
-        "userInfo",
-        JSON.stringify(data.userInfo)
+      "userInfo",
+      JSON.stringify(data.userInfo)
     );
+  }
+
+  localStorage.setItem(
+    "daily",
+    JSON.stringify(daily)
+  );
+
+  localStorage.setItem(
+    "customFoods",
+    JSON.stringify(customFoods)
+  );
+
+  localStorage.setItem(
+    "customExercises",
+    JSON.stringify(customExercises)
+  );
+
+  localStorage.setItem(
+    "weightHistory",
+    JSON.stringify(weightHistory)
+  );
+
   foods = { ...defaultFoods, ...customFoods };
 
   exercises = {
@@ -684,15 +718,21 @@ async function loadCloudData() {
     ...customExercises,
   };
 
- updateUI();
-renderCustomFoods();
-renderCustomExercises();
-renderWeightChart();
-loadExercises();
-loadInfoSummary();
+  updateUI();
+
+  renderCustomFoods();
+
+  renderCustomExercises();
+
+  renderWeightChart();
+
+  loadExercises();
+
+  loadInfoSummary();
 
   console.log("Cloud loaded");
 }
+
       loadInfoSummary();
       updateUI();
 
