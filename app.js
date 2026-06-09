@@ -10,11 +10,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 import {
   getAuth,
-  GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
   onAuthStateChanged,
   signOut,
+  browserLocalPersistence,
+  setPersistence,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 console.log("APP STARTED");
 
@@ -35,26 +36,34 @@ console.log("FIREBASE OK");
 const db = getFirestore(app);
 
 const auth = getAuth(app);
-auth.useDeviceLanguage();
-const provider = new GoogleAuthProvider();
-getRedirectResult(auth)
-  .then((result) => {
-    if (result?.user) {
-      console.log("REDIRECT LOGIN SUCCESS");
-    }
-  })
-  .catch((error) => {
-    console.log("REDIRECT ERROR:", error);
+
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("Persistence enabled");
   });
+
+auth.useDeviceLanguage();
+
+
 const authArea = document.getElementById("authArea");
 const loginOverlay = document.getElementById("loginOverlay");
 
 let currentUid = null;
 
-
 async function login() {
+  const email = prompt("Email:");
+  const password = prompt("Password:");
+
+  if (!email || !password) return;
+
   try {
-    await signInWithRedirect(auth, provider);
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    console.log("LOGIN SUCCESS");
   } catch (error) {
     console.log(error);
   }
