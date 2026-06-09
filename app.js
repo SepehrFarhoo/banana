@@ -1,5 +1,5 @@
 
-console.log("hello");
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 
 import {
@@ -12,12 +12,12 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithRedirect,
-getRedirectResult,
+
   onAuthStateChanged,
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 console.log("APP STARTED");
-console.log(initializeApp);
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyCX-0tvD8yl0SCNZ7gwPk88d9vg1DJEt90",
@@ -51,8 +51,8 @@ async function login() {
 }
 
 async function logout() {
-  localStorage.clear();
- await signOut(auth);
+  await signOut(auth);
+localStorage.clear();
   daily = {
     date: "",
     entries: [],
@@ -64,7 +64,7 @@ async function logout() {
 
   foods = { ...defaultFoods };
   exercises = { ...defaultExercises };
-
+selectedFood = null;
   updateUI();
   renderCustomFoods();
   renderCustomExercises();
@@ -77,7 +77,7 @@ async function logout() {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUid = user.uid;
-loginOverlay.style.display = "none";
+document.getElementById("loginOverlay") = "none";
     console.log("LOGGED IN:", user.email);
 
     authArea.innerHTML = `
@@ -93,7 +93,7 @@ loginOverlay.style.display = "none";
     await loadCloudData();
   } else {
     currentUid = null;
-  loginOverlay.style.display = "flex";
+  document.getElementById("loginOverlay") = "flex";
     console.log("NOT LOGGED IN");
 
     authArea.innerHTML = `
@@ -396,6 +396,7 @@ loginOverlay.style.display = "none";
           goalWeight: +goalWeight.value,
           goalSpeed: +goalSpeed.value,
           activity: +activity.value,
+          saveCloudData();
         };
 
         localStorage.setItem("userInfo", JSON.stringify(info));
@@ -642,7 +643,8 @@ function renderWeightChart() {
     customFoods,
     customExercises,
     weightHistory,
-  };
+    userInfo: JSON.parse(localStorage.getItem("userInfo")),
+};
 
   await setDoc(doc(db, "users", currentUid), data);
 
@@ -667,7 +669,11 @@ async function loadCloudData() {
 
   if (data.weightHistory)
     weightHistory = data.weightHistory;
-
+  if (data.userInfo)
+    localStorage.setItem(
+        "userInfo",
+        JSON.stringify(data.userInfo)
+    );
   foods = { ...defaultFoods, ...customFoods };
 
   exercises = {
@@ -675,7 +681,12 @@ async function loadCloudData() {
     ...customExercises,
   };
 
- 
+ updateUI();
+renderCustomFoods();
+renderCustomExercises();
+renderWeightChart();
+loadExercises();
+loadInfoSummary();
 
   console.log("Cloud loaded");
 }
