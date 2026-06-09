@@ -79,7 +79,9 @@ selectedFood = null;
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUid = user.uid;
-loginOverlay.style.display = "none";
+if (loginOverlay) {
+  loginOverlay.style.display = "none";
+}
     console.log("LOGGED IN:", user.email);
 
     authArea.innerHTML = `
@@ -95,7 +97,9 @@ loginOverlay.style.display = "none";
     await loadCloudData();
   } else {
     currentUid = null;
- loginOverlay.style.display = "flex";
+ if (loginOverlay) {
+  loginOverlay.style.display = "flex";
+}
     console.log("NOT LOGGED IN");
 
     authArea.innerHTML = `
