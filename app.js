@@ -59,13 +59,33 @@ async function login() {
 }
 
 async function logout() {
-  await signOut(auth);
+  localStorage.clear();
+ await signOut(auth);
+  daily = {
+    date: "",
+    entries: [],
+  };
+
+  customFoods = {};
+  customExercises = {};
+  weightHistory = [];
+
+  foods = { ...defaultFoods };
+  exercises = { ...defaultExercises };
+
+  updateUI();
+  renderCustomFoods();
+  renderCustomExercises();
+  renderWeightChart();
+  loadExercises();
+
+ 
 }
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUid = user.uid;
-
+loginOverlay.style.display = "none";
     console.log("LOGGED IN:", user.email);
 
     authArea.innerHTML = `
@@ -81,7 +101,7 @@ onAuthStateChanged(auth, async (user) => {
     await loadCloudData();
   } else {
     currentUid = null;
-
+  loginOverlay.style.display = "flex";
     console.log("NOT LOGGED IN");
 
     authArea.innerHTML = `
