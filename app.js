@@ -39,7 +39,7 @@ let currentUid = null;
 
 const provider = new GoogleAuthProvider();
 
-let currentUid = null;
+
 
 async function login() {
   try {
@@ -638,7 +638,12 @@ async function loadCloudData() {
     ...customExercises,
   };
 
-  updateUI();
+ 
+
+  console.log("Cloud loaded");
+}
+      loadInfoSummary();
+      updateUI();
 
   renderCustomFoods();
 
@@ -647,11 +652,6 @@ async function loadCloudData() {
   renderWeightChart();
 
   loadExercises();
-
-  console.log("Cloud loaded");
-}
-      loadInfoSummary();
-     
 
       window.toggleDark = toggleDark;
 window.switchTab = switchTab;
