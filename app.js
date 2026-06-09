@@ -1,5 +1,5 @@
 
-console.log("hellow")
+console.log("hellow222")
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 
 import {
@@ -12,7 +12,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithRedirect,
-
+  getRedirectResult,
   onAuthStateChanged,
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
@@ -37,7 +37,15 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 auth.useDeviceLanguage();
 const provider = new GoogleAuthProvider();
-
+getRedirectResult(auth)
+  .then((result) => {
+    if (result?.user) {
+      console.log("REDIRECT LOGIN SUCCESS");
+    }
+  })
+  .catch((error) => {
+    console.log("REDIRECT ERROR:", error);
+  });
 const authArea = document.getElementById("authArea");
 const loginOverlay = document.getElementById("loginOverlay");
 
