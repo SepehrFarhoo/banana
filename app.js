@@ -35,19 +35,11 @@ console.log("FIREBASE OK");
 const db = getFirestore(app);
 
 const auth = getAuth(app);
-
+auth.useDeviceLanguage();
 let currentUid = null;
 
 const provider = new GoogleAuthProvider();
-getRedirectResult(auth)
-  .then((result) => {
-    if (result?.user) {
-      console.log("Redirect login success");
-    }
-  })
-  .catch((error) => {
-    console.log(error);
-  });
+
 
 
 async function login() {
