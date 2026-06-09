@@ -39,12 +39,20 @@ const auth = getAuth(app);
 let currentUid = null;
 
 const provider = new GoogleAuthProvider();
-
+getRedirectResult(auth)
+  .then((result) => {
+    if (result?.user) {
+      console.log("Redirect login success");
+    }
+  })
+  .catch((error) => {
+    console.log(error);
+  });
 
 
 async function login() {
   try {
-    await signInWithPopup(auth, provider);
+    await signInWithRedirect(auth, provider);
   } catch (error) {
     console.log(error);
   }
@@ -60,11 +68,27 @@ onAuthStateChanged(auth, async (user) => {
 
     console.log("LOGGED IN:", user.email);
 
+    authArea.innerHTML = `
+      <span style="margin-right:10px;">
+        Logged in as ${user.email}
+      </span>
+
+      <button onclick="logout()" class="danger">
+        Logout
+      </button>
+    `;
+
     await loadCloudData();
   } else {
     currentUid = null;
 
     console.log("NOT LOGGED IN");
+
+    authArea.innerHTML = `
+      <button onclick="login()" class="primary">
+        Login
+      </button>
+    `;
   }
 });
 
