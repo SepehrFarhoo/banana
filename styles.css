@@ -32,6 +32,8 @@
         padding: 12px 18px;
         background: var(--card);
         border-bottom: 1px solid var(--border);
+              flex-wrap: wrap;
+gap: 10px;
       }
 
       /* THEME TOGGLE */
@@ -186,3 +188,6 @@
         font-size: 13px;
         color: var(--muted);
       }
+.theme-toggle {
+  flex-shrink: 0;
+}
