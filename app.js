@@ -396,12 +396,13 @@ document.getElementById("loginOverlay") = "none";
           goalWeight: +goalWeight.value,
           goalSpeed: +goalSpeed.value,
           activity: +activity.value,
-          saveCloudData()
+          
         };
 
         localStorage.setItem("userInfo", JSON.stringify(info));
 
         updateUI();
+        saveCloudData();
       }
 
       function loadInfoSummary() {
