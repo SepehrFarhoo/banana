@@ -396,7 +396,7 @@ document.getElementById("loginOverlay") = "none";
           goalWeight: +goalWeight.value,
           goalSpeed: +goalSpeed.value,
           activity: +activity.value,
-          
+  
         };
 
         localStorage.setItem("userInfo", JSON.stringify(info));
