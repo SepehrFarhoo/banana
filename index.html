@@ -14,30 +14,34 @@
   </head>
 
   <body>
-    <!-- <div id="loginOverlay" style="
-position: fixed;
-inset: 0;
-background: rgba(0,0,0,0.9);
-display: flex;
-align-items: center;
-justify-content: center;
-z-index: 9999;
-flex-direction: column;
-color: white;
-">
-  <h2>Please Login</h2>
+    <div
+      id="loginOverlay"
+      style="
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        flex-direction: column;
+        color: white;
+        gap: 10px;
+      "
+    >
+      <h2>Please Login</h2>
 
-  <button onclick="login()" class="primary">
-    Login with Google
-  </button> -->
-</div>
+      <input id="emailInput" type="email" placeholder="Email" />
+
+      <input id="passwordInput" type="password" placeholder="Password" />
+
+      <button onclick="login()" class="primary">Login</button>
+    </div>
     <div class="nav">
       <h3>Calorie Tracker</h3>
-  <div id="authArea">
-  <button onclick="login()" class="primary">
-    Login
-  </button>
-</div>
+      <div id="authArea">
+        <button onclick="login()" class="primary">Login</button>
+      </div>
 
       <div class="theme-toggle" onclick="toggleDark()">
         <div id="toggleCircle" class="toggle-circle">☀️</div>
@@ -178,7 +182,7 @@ color: white;
     </div>
 
     <footer>Developed by Sepehr</footer>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script type="module" src="app.js"></script>
   </body>
 </html>
