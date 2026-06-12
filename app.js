@@ -1,54 +1,21 @@
 
-console.log("hello3")
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-} from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-  browserLocalPersistence,
-  setPersistence,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-console.log("APP STARTED");
+console.log("hello")
 
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCX-0tvD8yl0SCNZ7gwPk88d9vg1DJEt90",
-  authDomain: "banana-calorie-tracker.firebaseapp.com",
-  projectId: "banana-calorie-tracker",
-  storageBucket: "banana-calorie-tracker.firebasestorage.app",
-  messagingSenderId: "1057838315587",
-  appId: "1:1057838315587:web:0e712d0fa0663fa4ff7cf6"
-};
+const supabaseUrl =
+  "https://ixupxgtgpiyzaoaiynpn.supabase.co";
 
-const app = initializeApp(firebaseConfig);
+const supabaseKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4dXB4Z3RncGl5emFvYWl5bnBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjI4NDcsImV4cCI6MjA5NjgzODg0N30.jnVjv_Hj4oqD0j8IKozJiBsLWXqCjkUI8K7Z7Wcjn6s";
 
-console.log("FIREBASE OK");
-
-const db = getFirestore(app);
-
-const auth = getAuth(app);
-
-setPersistence(auth, browserLocalPersistence)
-  .then(() => {
-    console.log("Persistence enabled");
-  });
-
-auth.useDeviceLanguage();
-
+const supabaseClient =
+  supabase.createClient(
+    supabaseUrl,
+    supabaseKey
+  );
 
 const authArea = document.getElementById("authArea");
 const loginOverlay = document.getElementById("loginOverlay");
-
-let currentUid = null;
 
 async function login() {
   const email =
@@ -59,22 +26,37 @@ async function login() {
 
   if (!email || !password) return;
 
-  try {
-    await signInWithEmailAndPassword(
-      auth,
+  const { data, error } =
+    await supabaseClient.auth.signInWithPassword({
       email,
-      password
-    );
+      password,
+    });
 
-    console.log("LOGIN SUCCESS");
-  } catch (error) {
+  if (error) {
     console.log(error);
     alert(error.message);
+    return;
   }
-} 
+
+  console.log("LOGIN SUCCESS");
+
+  loginOverlay.style.display = "none";
+
+  authArea.innerHTML = `
+    <span style="margin-right:10px;">
+      Logged in as ${email}
+    </span>
+
+    <button onclick="logout()" class="danger">
+      Logout
+    </button>
+  `;
+
+  await loadCloudData();
+}
 
 async function logout() {
-  await signOut(auth);
+  await supabaseClient.auth.signOut();
 
   localStorage.clear();
 
@@ -92,7 +74,19 @@ async function logout() {
 
   selectedFood = null;
 
+  if (loginOverlay) {
+    loginOverlay.style.display = "flex";
+  }
+
   authArea.innerHTML = `
+    <input id="emailInput"
+      type="email"
+      placeholder="Email">
+
+    <input id="passwordInput"
+      type="password"
+      placeholder="Password">
+
     <button onclick="login()" class="primary">
       Login
     </button>
@@ -103,49 +97,104 @@ async function logout() {
   renderCustomExercises();
   renderWeightChart();
   loadExercises();
-}
 
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    currentUid = user.uid;
-if (loginOverlay) {
-  loginOverlay.style.display = "none";
-}
-    console.log("LOGGED IN:", user.email);
+  console.log("LOGGED OUT");
+};
 
-    authArea.innerHTML = `
-      <span style="margin-right:10px;">
-        Logged in as ${user.email}
-      </span>
+async function saveCloudData() {
+  const {
+    data: { user },
+  } = await supabaseClient.auth.getUser();
 
-      <button onclick="logout()" class="danger">
-        Logout
-      </button>
-    `;
+  if (!user) return;
 
-   try {
-  await loadCloudData();
-} catch (e) {
-  console.log("Cloud load failed:", e);
-}
-  } else {
-    currentUid = null;
- if (loginOverlay) {
-  loginOverlay.style.display = "flex";
-}
-    console.log("NOT LOGGED IN");
+  const payload = {
+    daily,
+    customFoods,
+    customExercises,
+    weightHistory,
+    userInfo: JSON.parse(
+      localStorage.getItem("userInfo")
+    ),
+  };
 
-   authArea.innerHTML = `
-  <input id="emailInput" type="email" placeholder="Email">
-  
-  <input id="passwordInput" type="password" placeholder="Password">
+  const { error } =
+    await supabaseClient
+      .from("users_data")
+      .upsert({
+        id: user.id,
+        data: payload,
+      });
 
-  <button onclick="login()" class="primary">
-    Login
-  </button>
-`;
+  if (error) {
+    console.log(error);
+    return;
   }
-});
+
+  console.log("CLOUD SAVED");
+};
+async function loadCloudData() {
+  const {
+    data: { user },
+  } = await supabaseClient.auth.getUser();
+
+  if (!user) return;
+
+  const { data, error } =
+    await supabaseClient
+      .from("users_data")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+  if (error || !data) {
+    console.log("NO CLOUD DATA");
+    return;
+  }
+
+  const cloud = data.data;
+
+  daily = cloud.daily || {
+    date: "",
+    entries: [],
+  };
+
+  customFoods =
+    cloud.customFoods || {};
+
+  customExercises =
+    cloud.customExercises || {};
+
+  weightHistory =
+    cloud.weightHistory || [];
+
+  if (cloud.userInfo) {
+    localStorage.setItem(
+      "userInfo",
+      JSON.stringify(cloud.userInfo)
+    );
+  }
+
+  foods = {
+    ...defaultFoods,
+    ...customFoods,
+  };
+
+  exercises = {
+    ...defaultExercises,
+    ...customExercises,
+  };
+
+  updateUI();
+  renderCustomFoods();
+  renderCustomExercises();
+  renderWeightChart();
+  loadExercises();
+
+  console.log("CLOUD LOADED");
+}
+
+
 
 /* DARK MODE */
 
@@ -245,6 +294,175 @@ if (loginOverlay) {
         "Soda Cup": { cal: 150, unit: "1 cup" },
 
         "Cheat Meal": { cal: 1200, unit: "1 meal" },
+        "Chicken Wings": { cal: 120, unit: "1 wing" },
+"Chicken Nuggets": { cal: 50, unit: "1 nugget" },
+"Hot Dog": { cal: 350, unit: "1 hot dog" },
+"Sausage": { cal: 180, unit: "1 sausage" },
+
+"Pepperoni Pizza": { cal: 500, unit: "1 slice" },
+"Cheese Pizza": { cal: 420, unit: "1 slice" },
+"Burger Single": { cal: 650, unit: "1 burger" },
+"Zinger Burger": { cal: 750, unit: "1 burger" },
+
+"Falafel Sandwich": { cal: 550, unit: "1 sandwich" },
+"Bandari": { cal: 700, unit: "1 sandwich" },
+"Olivieh Sandwich": { cal: 600, unit: "1 sandwich" },
+
+"Kashk Bademjan": { cal: 300, unit: "1 bowl" },
+"Mirza Ghasemi": { cal: 280, unit: "1 bowl" },
+"Ash Reshteh": { cal: 350, unit: "1 bowl" },
+"Abgoosht": { cal: 650, unit: "1 serving" },
+
+"Kotlet": { cal: 180, unit: "1 piece" },
+"Adas Polo": { cal: 500, unit: "1 plate" },
+"Loobia Polo": { cal: 550, unit: "1 plate" },
+"Baghali Polo": { cal: 600, unit: "1 plate" },
+
+"Chelo Kebab": { cal: 950, unit: "1 plate" },
+"Jooje with Rice": { cal: 850, unit: "1 plate" },
+
+"Cheesecake": { cal: 450, unit: "1 slice" },
+"Cake Chocolate": { cal: 400, unit: "1 slice" },
+"Donut": { cal: 300, unit: "1 donut" },
+"Croissant": { cal: 270, unit: "1 croissant" },
+
+"Nutella Tbsp": { cal: 100, unit: "1 tbsp" },
+"Peanut Butter": { cal: 95, unit: "1 tbsp" },
+
+"Greek Yogurt": { cal: 120, unit: "1 cup" },
+"Yogurt": { cal: 90, unit: "1 bowl" },
+
+"Cheese Slice": { cal: 80, unit: "1 slice" },
+
+"Oatmeal": { cal: 250, unit: "1 bowl" },
+"Cereal": { cal: 220, unit: "1 bowl" },
+
+"Protein Bar": { cal: 220, unit: "1 bar" },
+
+"Rice Cake": { cal: 35, unit: "1 cake" },
+
+"Energy Drink": { cal: 180, unit: "1 can" },
+
+"Coca Cola": { cal: 140, unit: "1 can" },
+"Sprite": { cal: 140, unit: "1 can" },
+
+"Orange Juice": { cal: 110, unit: "1 glass" },
+
+"Burger Sauce": { cal: 90, unit: "1 tbsp" },
+
+"Shawarma": { cal: 700, unit: "1 wrap" },
+
+"Wrap Chicken": { cal: 500, unit: "1 wrap" },
+
+"Steak": { cal: 500, unit: "1 steak" },
+
+"Salad Caesar": { cal: 350, unit: "1 bowl" },
+
+"Fried Rice": { cal: 700, unit: "1 plate" },
+
+"Instant Noodles": { cal: 380, unit: "1 pack" },
+
+"Lasagna": { cal: 650, unit: "1 piece" },
+
+"Mac and Cheese": { cal: 550, unit: "1 bowl" },
+
+"Frappuccino": { cal: 350, unit: "1 cup" },
+
+"Cappuccino": { cal: 120, unit: "1 cup" },
+
+"Cookie": { cal: 80, unit: "1 cookie" },
+
+"Brownie": { cal: 320, unit: "1 brownie" },
+
+"Baklava": { cal: 150, unit: "1 piece" },
+
+"Halva": { cal: 180, unit: "1 piece" },
+
+"Cheeseburger": { cal: 750, unit: "1 burger" },
+
+"Fried Chicken Piece": { cal: 320, unit: "1 piece" },
+
+"Popcorn Large": { cal: 500, unit: "1 bucket" },
+
+"Milkshake": { cal: 500, unit: "1 glass" },
+
+"Smoothie": { cal: 250, unit: "1 glass" },
+"Coca Cola": { cal: 140, unit: "1 can" },
+"Sprite": { cal: 140, unit: "1 can" },
+
+"Fanta": { cal: 160, unit: "1 can" },
+
+"Peach": { cal: 70, unit: "1 large" },
+
+"Plum": { cal: 40, unit: "1 large" },
+
+"Grape": { cal: 3, unit: "1 grape" },
+
+"Strawberry": { cal: 8, unit: "1 large" },
+
+"Macaroni Salad": { cal: 90, unit: "1 tbsp" },
+
+"Lubia Polo": { cal: 450, unit: "5 tbsp" },
+"Baghali Polo": { cal: 400, unit: "5 tbsp" },
+
+"Khoresht Karafs": { cal: 250, unit: "5 tbsp" },
+
+"Baked Beans": { cal: 350, unit: "1 plate" },
+
+"Olive Oil": { cal: 120, unit: "1 tbsp" },
+
+"Sugar": { cal: 16, unit: "1 tsp" },
+
+"Cheesecake": { cal: 450, unit: "1 slice" },
+
+"Cupcake": { cal: 220, unit: "1 cupcake" },
+
+"Kiwi": { cal: 60, unit: "1 large" },
+
+"Mango": { cal: 200, unit: "1 large" },
+
+"Greek Yogurt": { cal: 25, unit: "1 tbsp" },
+"White Rice": { cal: 130, unit: "1 serving" },
+
+"Lavash Bread": { cal: 90, unit: "1 sheet" },
+
+"Toast Bread": { cal: 80, unit: "2 slices" },
+
+"Tuna Can": { cal: 220, unit: "1 can" },
+
+"Fries": { cal: 365, unit: "1 medium pack" },
+
+"Ketchup": { cal: 20, unit: "1 tbsp" },
+
+"Mayonnaise": { cal: 90, unit: "1 tbsp" },
+
+"Dates": { cal: 20, unit: "1 date" },
+
+"Walnut": { cal: 26, unit: "1 half" },
+
+"Protein Powder": { cal: 120, unit: "1 scoop" },
+
+"Milk Full Fat": { cal: 150, unit: "1 glass" },
+
+"Milk Low Fat": { cal: 100, unit: "1 glass" },
+
+"Ice Cream": { cal: 270, unit: "1 cup" },
+
+"Chips": { cal: 160, unit: "1 small pack" },
+
+"Popcorn": { cal: 30, unit: "1 cup" },
+
+"Instant Coffee 3in1": { cal: 80, unit: "1 sachet" },
+
+"Tea": { cal: 2, unit: "1 cup" },
+
+"Coffee Black": { cal: 5, unit: "1 cup" },
+
+"Honey": { cal: 64, unit: "1 tbsp" },
+
+"Jam": { cal: 50, unit: "1 tbsp" },
+
+"Nut Mix": { cal: 170, unit: "1 handful" },
       };
 
       const defaultExercises = {
@@ -679,100 +897,74 @@ function renderWeightChart() {
       /* INIT */
 
       applyDarkMode();
-     async function saveCloudData() {
-  if (!currentUid) return;
+  
 
-  const data = {
-    daily,
-    customFoods,
-    customExercises,
-    weightHistory,
-    userInfo: JSON.parse(localStorage.getItem("userInfo")),
-};
 
-  await setDoc(doc(db, "users", currentUid), data);
 
-  console.log("Cloud saved");
+async function checkLogin() {
+  const {
+    data: { user },
+  } = await supabaseClient.auth.getUser();
+
+  if (user) {
+    console.log("ALREADY LOGGED IN");
+
+    if (loginOverlay) {
+      loginOverlay.style.display = "none";
+    }
+
+    authArea.innerHTML = `
+      <span style="margin-right:10px;">
+        Logged in as ${user.email}
+      </span>
+
+      <button onclick="logout()" class="danger">
+        Logout
+      </button>
+    `;
+
+    await loadCloudData();
+  } else {
+    console.log("NOT LOGGED IN");
+
+    if (loginOverlay) {
+      loginOverlay.style.display = "flex";
+    }
+
+    authArea.innerHTML = `
+      <input id="emailInput"
+        type="email"
+        placeholder="Email">
+
+      <input id="passwordInput"
+        type="password"
+        placeholder="Password">
+
+      <button onclick="login()" class="primary">
+        Login
+      </button>
+    `;
+  }
 }
 
-async function loadCloudData() {
-  if (!currentUid) return;
+checkLogin();
 
-  const ref = doc(db, "users", currentUid);
 
-  const snap = await getDoc(ref);
 
-  if (!snap.exists()) {
-    console.log("No cloud data found");
-    return;
-  }
 
-  const data = snap.data();
 
-  if (data.daily) {
-    daily = data.daily;
-  }
 
-  if (data.customFoods) {
-    customFoods = data.customFoods;
-  }
 
-  if (data.customExercises) {
-    customExercises = data.customExercises;
-  }
 
-  if (data.weightHistory) {
-    weightHistory = data.weightHistory;
-  }
 
-  if (data.userInfo) {
-    localStorage.setItem(
-      "userInfo",
-      JSON.stringify(data.userInfo)
-    );
-  }
 
-  localStorage.setItem(
-    "daily",
-    JSON.stringify(daily)
-  );
 
-  localStorage.setItem(
-    "customFoods",
-    JSON.stringify(customFoods)
-  );
 
-  localStorage.setItem(
-    "customExercises",
-    JSON.stringify(customExercises)
-  );
 
-  localStorage.setItem(
-    "weightHistory",
-    JSON.stringify(weightHistory)
-  );
 
-  foods = { ...defaultFoods, ...customFoods };
 
-  exercises = {
-    ...defaultExercises,
-    ...customExercises,
-  };
 
-  updateUI();
 
-  renderCustomFoods();
-
-  renderCustomExercises();
-
-  renderWeightChart();
-
-  loadExercises();
-
- 
-
-  console.log("Cloud loaded");
-}
 
       loadInfoSummary();
       updateUI();
